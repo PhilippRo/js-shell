@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
-project(js-shell C CXX)
+project(js-shell CXX C)
+
+set(CMAKE_CXX_STANDARD 14)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -7,6 +9,9 @@ include(CheckCXXCompilerFlag)
 
 if(NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     option(ENABLE_ASAN "Enable address sanitizer." OFF)
+endif()
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    option(ENABLE_JS_DEBUG "Build sources with -DJS_DEBUG." OFF)
 endif()
 
 set(SANITIZE_CXXFLAGS)
@@ -99,7 +104,7 @@ endif()
 find_package(SpiderMonkey REQUIRED)
 message(STATUS "${SPIDERMONKEY_INCLUDE_DIRS}")
 message(STATUS "${SPIDERMONKEY_LIBRARIES}")
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if(ENABLE_JS_DEBUG)
     add_definitions(-DJS_DEBUG)
 endif()
 if(MSVC)
@@ -107,7 +112,14 @@ if(MSVC)
 endif()
 
 set(_include_dirs ${SPIDERMONKEY_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
-set(_link_libs ${SPIDERMONKEY_LIBRARIES} pthread)
+set(_link_libs ${SPIDERMONKEY_LIBRARIES})
+
+find_package(JSRDBG)
+if(JSRDBG_FOUND)
+    add_definitions(-DUSE_REMOTE_DEBUGGER)
+    list(APPEND _include_dirs ${JSRDBG_INCLUDE_DIR})
+    list(APPEND _link_libs ${JSRDBG_LIBRARIES})
+endif()
 
 include_directories(${_include_dirs})
 
@@ -116,13 +128,11 @@ include_directories(${_include_dirs})
 add_definitions(-DEWSJS_STANDALONE_SPIDERMONKEY)
 
 add_executable(run main.cpp)
-target_link_libraries(run ${_link_libs})
+target_link_libraries(run ${_link_libs} pthread)
 set_target_properties(run PROPERTIES
     LINKER_LANGUAGE CXX
     COMPILE_FLAGS "${SANITIZE_CXXFLAGS}"
     LINK_FLAGS "${SANITIZE_LDFLAGS}")
-
 add_executable(repeat repeat.c)
-set_target_properties(repeat PROPERTIES
-    LINKER_LANGUAGE C)
+
 # vim:et sw=4 ts=4
