@@ -2,7 +2,8 @@ js-shell
 =======
 
 This is my implementation of the Spidermokey embedding
-tutorial for Spidermonkey 24.
+tutorial for Spidermonkey 24. Moreover it also integrates
+the [JSRDBG](https://github.com/swojtasiak/jsrdbg) javascript debugger.
 
 It is able to start several threads with their own runtimes.
 
@@ -15,4 +16,4 @@ i.e.
 
 will start 10 threads, each running test.js.
 
-Insure, that CMake can find the pkg-conf file (set PKG_CONFIG_PATH).
+Insure, that CMake can find the pkg-conf files (set PKG_CONFIG_PATH).
